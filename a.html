@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friend Match - Shaxriyor Qurbanov BSB Project</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            transition: all 0.3s ease;
+        }
+
+        .gradient-btn:hover {
+            background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        canvas {
+            outline: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center font-bold text-xl shadow-lg">
+                    FM
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight">Friend<span class="gradient-text">Match</span></span>
+                    <span class="text-xs text-sky-400 block font-medium">Grade 10 English BSB 1 Project</span>
+                </div>
+            </div>
+            <div class="hidden md:flex space-x-6 text-sm font-semibold text-slate-300">
+                <a href="#profile" class="hover:text-sky-400 transition-colors">Stage 1: Character</a>
+                <a href="#ideal-friend" class="hover:text-sky-400 transition-colors">Stage 2: Ideal Match</a>
+                <a href="#quiz" class="hover:text-sky-400 transition-colors">Stage 3: Quiz</a>
+                <a href="#score" class="hover:text-sky-400 transition-colors">Stage 4: Compatibility</a>
+            </div>
+            <div class="bg-sky-500/10 border border-sky-500/20 text-sky-400 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span> 3D Active Scene
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Side: Interactive 3D Canvas Container -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+            <div class="glass-panel rounded-3xl p-4 relative overflow-hidden h-[520px] shadow-2xl flex flex-col justify-between">
+                <!-- Status Badge -->
+                <div class="absolute top-6 left-6 z-10 bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-full px-3 py-1 text-xs text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-arrows-left-right text-sky-400"></i> Drag horizontally (360°)
+                </div>
+
+                <!-- Three.js Canvas Container -->
+                <div id="canvas-container" class="w-full h-full rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing"></div>
+
+                <!-- Floating Info Controls -->
+                <div class="absolute bottom-6 left-6 right-6 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-700/60 p-3 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Shaxriyor Qurbanov</h4>
+                        <p class="text-xs text-slate-400">3D Interactive Avatar & Interests</p>
+                    </div>
+                    <button id="reset-cam" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-sky-400 border border-sky-500/30 transition">
+                        Reset View
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Profile Tags -->
+            <div class="glass-card rounded-2xl p-4 grid grid-cols-2 gap-3 text-xs">
+                <div class="flex items-center gap-2 text-slate-300">
+                    <i class="fa-solid fa-user text-sky-400"></i> Age: 16 Years Old
+                </div>
+                <div class="flex items-center gap-2 text-slate-300">
+                    <i class="fa-solid fa-flask text-emerald-400"></i> Biology & Chemistry
+                </div>
+                <div class="flex items-center gap-2 text-slate-300">
+                    <i class="fa-solid fa-futbol text-yellow-400"></i> Football Player
+                </div>
+                <div class="flex items-center gap-2 text-slate-300">
+                    <i class="fa-solid fa-gamepad text-purple-400"></i> Gaming Enthusiast
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Project Documentation (BSB 1 Requirements) -->
+        <div class="lg:col-span-7 flex flex-col gap-8">
+            
+            <!-- STAGE 1: Character Overview -->
+            <section id="profile" class="glass-panel rounded-3xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold text-sky-400 tracking-wider uppercase">STAGE 1</span>
+                    <h2 class="text-xl font-bold text-white">Create Your Teenager</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
+                        <h3 class="text-lg font-bold text-sky-300">Shaxriyor Qurbanov (16 years old)</h3>
+                        <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+                            Shaxriyor is an ambitious and enthusiastic 16-year-old student who has a profound passion for natural sciences and active sports. He is highly <span class="text-sky-300 font-semibold">cheerful</span>, <span class="text-sky-300 font-semibold">intelligent</span>, and <span class="text-sky-300 font-semibold">friendly</span>, always eager to connect with like-minded peers.
+                        </p>
+                    </div>
+
+                    <!-- Personality Adjectives (Requirement: 8+ adjectives & Prefixes) -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-slate-400 mb-2">Personality Traits & Adjectives (BSB Vocabulary):</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Cheerful</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Intelligent</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Friendly</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Ambitious</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Curious</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Cooperative</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Energetic</span>
+                            <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30 font-medium">Determined</span>
+                        </div>
+                    </div>
+
+                    <!-- Prefixes (un-, in-, dis-) & -ing forms -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="glass-card p-3 rounded-xl">
+                            <h5 class="text-xs font-bold text-amber-400 mb-1">Prefix Adjectives (un-, in-, dis-):</h5>
+                            <ul class="text-xs text-slate-300 space-y-1">
+                                <li>• Sometimes <strong class="text-amber-300">impatient</strong> with slow progress</li>
+                                <li>• Finds <strong class="text-amber-300">disorganized</strong> study habits annoying</li>
+                                <li>• Never <strong class="text-amber-300">unfriendly</strong> to new classmates</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card p-3 rounded-xl">
+                            <h5 class="text-xs font-bold text-emerald-400 mb-1">Preferences (-ing forms):</h5>
+                            <ul class="text-xs text-slate-300 space-y-1">
+                                <li>• <strong class="text-emerald-300">Enjoys conducting</strong> biology experiments</li>
+                                <li>• <strong class="text-emerald-300">Loves playing</strong> competitive football</li>
+                                <li>• <strong class="text-emerald-300">Prefers solving</strong> complex chemical formulas</li>
+                                <li>• <strong class="text-emerald-300">Avoids arguing</strong> over minor topics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAGE 2: Design Ideal Best Friend -->
+            <section id="ideal-friend" class="glass-panel rounded-3xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold text-indigo-400 tracking-wider uppercase">STAGE 2</span>
+                    <h2 class="text-xl font-bold text-white">Ideal Best Friend Match</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Desired Qualities -->
+                        <div class="bg-emerald-950/30 border border-emerald-800/40 rounded-2xl p-4">
+                            <h4 class="text-sm font-bold text-emerald-400 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check"></i> 5 Must-Have Qualities
+                            </h4>
+                            <ul class="text-xs text-slate-300 space-y-2">
+                                <li><strong>1. Patient:</strong> Shaxriyor needs a patient friend because he sometimes makes impulsive decisions during experiments.</li>
+                                <li><strong>2. Supportive:</strong> Encourages him during football tournaments and study sessions.</li>
+                                <li><strong>3. Honest:</strong> Gives sincere feedback when reviewing homework or ideas.</li>
+                                <li><strong>4. Active:</strong> Enjoys outdoor activities, sports, and team games.</li>
+                                <li><strong>5. Open-minded:</strong> Willing to explore new scientific theories and games together.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Qualities to Avoid -->
+                        <div class="bg-rose-950/30 border border-rose-800/40 rounded-2xl p-4">
+                            <h4 class="text-sm font-bold text-rose-400 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-xmark"></i> 2 Qualities to Avoid
+                            </h4>
+                            <ul class="text-xs text-slate-300 space-y-2">
+                                <li><strong>1. Dishonest:</strong> Trust is the foundation of Shaxriyor's ideal friendship.</li>
+                                <li><strong>2. Insensitive:</strong> A good friend should care about feelings and maintain mutual respect.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Common Interests & Shared Activities -->
+                    <div class="glass-card p-4 rounded-2xl">
+                        <h4 class="text-xs font-bold text-sky-400 mb-2">Common Interests & Shared Activities:</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            They should share a mutual love for <strong>science experiments, biology, and football</strong>. Activities they enjoy doing together include training on the football field, conducting hands-on chemistry tests in the lab, and co-op computer gaming on weekends.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAGE 3: Friendship Compatibility Test (Interactive Quiz) -->
+            <section id="quiz" class="glass-panel rounded-3xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold text-purple-400 tracking-wider uppercase">STAGE 3</span>
+                    <h2 class="text-xl font-bold text-white">Friendship Compatibility Test</h2>
+                </div>
+
+                <div id="quiz-container" class="space-y-4">
+                    <!-- Dynamic Question Box -->
+                    <div id="question-box" class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                        <span id="question-number" class="text-xs font-semibold text-purple-400">Question 1 of 5</span>
+                        <h4 id="question-text" class="text-sm font-bold text-white mt-1">
+                            Your friend cancels your weekend science lab plans at the last minute. What do you do?
+                        </h4>
+                        <div id="options-container" class="grid grid-cols-1 gap-2 mt-4">
+                            <!-- Options rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAGE 4: Final Match Score -->
+            <section id="score" class="glass-panel rounded-3xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold text-amber-400 tracking-wider uppercase">STAGE 4</span>
+                    <h2 class="text-xl font-bold text-white">Final Friendship Compatibility Score</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <!-- Category Breakdown -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Personality Match:</span>
+                            <span class="font-bold text-sky-400">9 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-sky-400 h-full" style="width: 90%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Common Interests:</span>
+                            <span class="font-bold text-emerald-400">10 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-emerald-400 h-full" style="width: 100%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Trust & Honesty:</span>
+                            <span class="font-bold text-purple-400">9 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-purple-400 h-full" style="width: 90%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Communication:</span>
+                            <span class="font-bold text-amber-400">8 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-amber-400 h-full" style="width: 80%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Fun Together:</span>
+                            <span class="font-bold text-rose-400">10 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-rose-400 h-full" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Score Badge & Summary Explanation -->
+                    <div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center">
+                        <div class="text-4xl font-extrabold gradient-text mb-1">46 / 50</div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Overall Match Rating</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            "I would give this friendship a <strong>46/50</strong> score because both individuals are deeply passionate about science, love active football matches, and respect each other's goals. They may occasionally disagree on strategy, but their shared patience and honesty resolve all issues quickly."
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 mt-12 py-6 text-center text-xs text-slate-500">
+        <p>Friend Match Application • Designed for 10th Grade English BSB 1 Project • Shaxriyor Qurbanov</p>
+    </footer>
+
+    <!-- Three.js 3D Avatar & Interactive Scene Logic -->
+    <script>
+        // --- 1. THREE.JS SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0f1d);
+
+        // Camera Setup
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 1.2, 5.5);
+
+        // WebGL Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // --- 2. ORBIT CONTROLS (RESTRICTED TO 360° HORIZONTAL ONLY) ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = false; // Disabled zoom to keep focus on avatar
+        controls.enablePan = false;  // Disabled panning
+        controls.target.set(0, 0.5, 0);
+
+        // CRITICAL REQUIREMENT: Restrict camera to horizontal rotation ONLY (360 degrees)
+        controls.minPolarAngle = Math.PI / 2; // Lock vertical angle at 90 degrees
+        controls.maxPolarAngle = Math.PI / 2; // Lock vertical angle at 90 degrees
+
+        // --- 3. LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        mainLight.position.set(5, 8, 5);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+
+        const blueRimLight = new THREE.PointLight(0x38bdf8, 2, 10);
+        blueRimLight.position.set(-3, 2, -2);
+        scene.add(blueRimLight);
+
+        const purpleRimLight = new THREE.PointLight(0x818cf8, 1.5, 10);
+        purpleRimLight.position.set(3, 1, -2);
+        scene.add(purpleRimLight);
+
+        // --- 4. 3D AVATAR MODEL (SHAXRIYOR QURBANOV - BASED ON REAL PHOTOS) ---
+        const avatarGroup = new THREE.Group();
+
+        // Materials
+        const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xd6a382, roughness: 0.6 });
+        const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1817, roughness: 0.9 }); // Dark short/curly hair
+        const jacketMaterial = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 }); // Dark jacket
+        const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }); // White shirt/collar
+        const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 }); // Dark pants
+
+        // Head
+        const headGeo = new THREE.BoxGeometry(0.5, 0.55, 0.5);
+        const head = new THREE.Mesh(headGeo, skinMaterial);
+        head.position.y = 1.3;
+        avatarGroup.add(head);
+
+        // Hair (Short dark textured hair matching photos)
+        const hairGroup = new THREE.Group();
+        for (let i = 0; i < 24; i++) {
+            const hairPuffGeo = new THREE.DodecahedronGeometry(0.08 + Math.random() * 0.04);
+            const hairPuff = new THREE.Mesh(hairPuffGeo, hairMaterial);
+            hairPuff.position.set(
+                (Math.random() - 0.5) * 0.52,
+                1.55 + (Math.random() - 0.5) * 0.12,
+                (Math.random() - 0.5) * 0.52
+            );
+            hairGroup.add(hairPuff);
+        }
+        avatarGroup.add(hairGroup);
+
+        // Eyes
+        const eyeGeo = new THREE.SphereGeometry(0.04, 16, 16);
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+        leftEye.position.set(-0.12, 1.35, 0.26);
+        const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+        rightEye.position.set(0.12, 1.35, 0.26);
+        avatarGroup.add(leftEye, rightEye);
+
+        // Nose
+        const noseGeo = new THREE.BoxGeometry(0.06, 0.1, 0.08);
+        const nose = new THREE.Mesh(noseGeo, skinMaterial);
+        nose.position.set(0, 1.28, 0.28);
+        avatarGroup.add(nose);
+
+        // Torso / Body (Jacket + White Collar Shirt)
+        const bodyGeo = new THREE.BoxGeometry(0.65, 0.8, 0.35);
+        const body = new THREE.Mesh(bodyGeo, jacketMaterial);
+        body.position.y = 0.6;
+        avatarGroup.add(body);
+
+        // White Shirt Inner Front
+        const shirtFrontGeo = new THREE.BoxGeometry(0.25, 0.75, 0.36);
+        const shirtFront = new THREE.Mesh(shirtFrontGeo, shirtMaterial);
+        shirtFront.position.set(0, 0.6, 0.01);
+        avatarGroup.add(shirtFront);
+
+        // Collar
+        const collarLeftGeo = new THREE.BoxGeometry(0.12, 0.1, 0.15);
+        const collarLeft = new THREE.Mesh(collarLeftGeo, shirtMaterial);
+        collarLeft.position.set(-0.1, 0.98, 0.2);
+        collarLeft.rotation.z = -0.2;
+        const collarRight = collarLeft.clone();
+        collarRight.position.x = 0.1;
+        collarRight.rotation.z = 0.2;
+        avatarGroup.add(collarLeft, collarRight);
+
+        // Arms (Jacket Sleeves)
+        const armGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.7, 16);
+        const leftArm = new THREE.Mesh(armGeo, jacketMaterial);
+        leftArm.position.set(-0.42, 0.55, 0);
+        leftArm.rotation.z = 0.15;
+
+        const rightArm = new THREE.Mesh(armGeo, jacketMaterial);
+        rightArm.position.set(0.42, 0.55, 0);
+        rightArm.rotation.z = -0.15;
+        avatarGroup.add(leftArm, rightArm);
+
+        // Legs
+        const legGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.8, 16);
+        const leftLeg = new THREE.Mesh(legGeo, pantsMaterial);
+        leftLeg.position.set(-0.18, -0.2, 0);
+
+        const rightLeg = new THREE.Mesh(legGeo, pantsMaterial);
+        rightLeg.position.set(0.18, -0.2, 0);
+        avatarGroup.add(leftLeg, rightLeg);
+
+        scene.add(avatarGroup);
+
+        // --- 5. FLOATING 3D SCIENCE & SPORTS ELEMENTS ---
+        const floatingGroup = new THREE.Group();
+
+        // 1) Football
+        const ballGeo = new THREE.IcosahedronGeometry(0.28, 2);
+        const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, wireframe: false });
+        const football = new THREE.Mesh(ballGeo, ballMat);
+        football.position.set(-1.2, 0.4, 0.3);
+        floatingGroup.add(football);
+
+        // 2) DNA Helix Strand
+        const dnaGroup = new THREE.Group();
+        const dnaNodeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const dnaStrandMat = new THREE.LineBasicMaterial({ color: 0x818cf8 });
+        
+        for (let i = 0; i < 16; i++) {
+            const y = (i - 8) * 0.08;
+            const angle = i * 0.5;
+            const x1 = Math.cos(angle) * 0.2;
+            const z1 = Math.sin(angle) * 0.2;
+            const x2 = -x1;
+            const z2 = -z1;
+
+            const n1 = new THREE.Mesh(new THREE.SphereGeometry(0.025), dnaNodeMat);
+            n1.position.set(x1, y, z1);
+            const n2 = new THREE.Mesh(new THREE.SphereGeometry(0.025), dnaNodeMat);
+            n2.position.set(x2, y, z2);
+            dnaGroup.add(n1, n2);
+
+            const points = [new THREE.Vector3(x1, y, z1), new THREE.Vector3(x2, y, z2)];
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(lineGeo, dnaStrandMat);
+            dnaGroup.add(line);
+        }
+        dnaGroup.position.set(1.3, 0.6, 0.2);
+        floatingGroup.add(dnaGroup);
+
+        // 3) Chemical Test Tube
+        const tubeGroup = new THREE.Group();
+        const tubeGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 16);
+        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.1 });
+        const liquidMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2 });
+
+        const tubeGlass = new THREE.Mesh(tubeGeo, glassMat);
+        const liquidGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.22, 16);
+        const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+        liquid.position.y = -0.05;
+
+        tubeGroup.add(tubeGlass, liquid);
+        tubeGroup.position.set(-0.9, 1.3, -0.4);
+        tubeGroup.rotation.z = -0.3;
+        floatingGroup.add(tubeGroup);
+
+        scene.add(floatingGroup);
+
+        // Floor Pedestal
+        const pedestalGeo = new THREE.CylinderGeometry(1.6, 1.8, 0.15, 32);
+        const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+        const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+        pedestal.position.y = -0.68;
+        scene.add(pedestal);
+
+        // Glowing Ring on Pedestal
+        const ringGeo = new THREE.RingGeometry(1.4, 1.5, 32);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = -0.6;
+        scene.add(ring);
+
+        // --- 6. ANIMATION LOOP ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Gentle floating animation for items
+            football.rotation.y = elapsedTime * 0.5;
+            football.position.y = 0.4 + Math.sin(elapsedTime * 2) * 0.05;
+
+            dnaGroup.rotation.y = elapsedTime * 0.8;
+            dnaGroup.position.y = 0.6 + Math.cos(elapsedTime * 1.8) * 0.05;
+
+            tubeGroup.rotation.y = elapsedTime * 0.4;
+            tubeGroup.position.y = 1.3 + Math.sin(elapsedTime * 1.5) * 0.04;
+
+            // Idle breathing animation for avatar
+            avatarGroup.position.y = Math.sin(elapsedTime * 1.2) * 0.02;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Window Resize Handler
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        // Reset Camera Button
+        document.getElementById('reset-cam').addEventListener('click', () => {
+            camera.position.set(0, 1.2, 5.5);
+            controls.target.set(0, 0.5, 0);
+            controls.reset();
+        });
+
+        // --- 7. STAGE 3 QUIZ LOGIC ---
+        const quizData = [
+            {
+                question: "Your friend cancels your weekend science lab plans at the last minute. What do you do?",
+                options: [
+                    "A) Stay calm, ask if they are okay, and reschedule for next week.",
+                    "B) Get angry and ignore their messages for a few days.",
+                    "C) Do the experiment alone and refuse to share findings."
+                ],
+                correct: 0
+            },
+            {
+                question: "You and your friend strongly disagree about football team tactics. How do you solve it?",
+                options: [
+                    "A) Stop playing football together completely.",
+                    "B) Discuss calmly, respect each other's opinions, and test both tactics.",
+                    "C) Insist that your strategy is the only correct one."
+                ],
+                correct: 1
+            },
+            {
+                question: "Your friend is struggling with a complex Chemistry homework topic. What is your response?",
+                options: [
+                    "A) Tell them to study harder on their own.",
+                    "B) Offer to study together and explain the formulas patiently.",
+                    "C) Do their homework for them completely."
+                ],
+                correct: 1
+            },
+            {
+                question: "You win a competitive gaming match against your friend. How do you act?",
+                options: [
+                    "A) Show good sportsmanship, say 'Good game!', and analyze plays together.",
+                    "B) Boast endlessly to make them feel disorganized.",
+                    "C) Refuse to play with them ever again."
+                ],
+                correct: 0
+            },
+            {
+                question: "How do you handle sharing scientific research ideas with your friend?",
+                options: [
+                    "A) Keep all ideas secret to be first.",
+                    "B) Share openly, welcome feedback, and work as a collaborative team.",
+                    "C) Dismiss their suggestions without listening."
+                ],
+                correct: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        function renderQuestion() {
+            const q = quizData[currentQuestion];
+            document.getElementById('question-number').innerText = `Question ${currentQuestion + 1} of ${quizData.length}`;
+            document.getElementById('question-text').innerText = q.question;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded-xl bg-slate-800/80 hover:bg-sky-600/30 border border-slate-700/60 hover:border-sky-500/50 text-xs text-slate-200 transition flex items-center justify-between";
+                btn.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>`;
+                btn.onclick = () => selectOption(idx);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(index) {
+            if (index === quizData[currentQuestion].correct) {
+                score++;
+            }
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                renderQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            const box = document.getElementById('question-box');
+            box.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto mb-3 text-xl">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-white">Compatibility Quiz Completed!</h4>
+                    <p class="text-xs text-slate-300 mt-1">You scored <strong>${score} out of ${quizData.length}</strong> on friendship compatibility questions.</p>
+                    <button onclick="resetQuiz()" class="mt-4 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white rounded-xl transition">
+                        Retake Test
+                    </button>
+                </div>
+            `;
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            renderQuestion();
+        }
+
+        // Initialize First Question
+        renderQuestion();
+    </script>
+</body>
+</html>
